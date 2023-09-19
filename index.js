@@ -61,20 +61,19 @@ app.get('/', authorizeToken, async (req, res) => {
         currency: terminalState.accountInformation.currency
     }
 
-    const tanggal = new Date().toISOString().split('T')[0];
-    const startDate = new Date(`${tanggal}T00:00:00.000Z`);
-    const endDate = new Date(`${tanggal}T23:59:59.000Z`);
+    // const tanggal = new Date().toISOString().split('T')[0];
+    // const startDate = new Date(`${tanggal}T00:00:00.000Z`);
+    // const endDate = new Date(`${tanggal}T23:59:59.000Z`);
     // console.log(startDate, 'startdate && ', endDate, 'enbdate');
     // const HistoryOrder = connection.historyStorage.getHistoryOrdersByTimeRange(new Date(Date.now() - 24 * 60 * 60 * 1000), new Date());
     const HistoryDeal = connection.historyStorage.getDealsByTimeRange(new Date(Date.now() - 24 * 60 * 60 * 1000), new Date());
     const ProfitDay = HistoryDeal?.reduce((a, b) => a + b.profit, 0);
-    // const History = {
-    //     history: connection.historyStorage.historyOrders
-    // }
+    const Position = terminalState.positions
 
     const result = {
         Account: Account,
-        ProfitDay: ProfitDay
+        ProfitDay: ProfitDay,
+        Position: Position
     }
     res.json({ result: result });
 });
