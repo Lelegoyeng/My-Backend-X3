@@ -22,7 +22,7 @@ app.use((req, res, next) => {
 
 function authorizeToken(req, res, next) {
     const token = req.headers.authorization.split(' ')[1];
-    console.log(token)
+    // console.log(token)
     if (!token) {
         return res.status(403).json({ message: 'Tidak ada token tersedia' });
     }
