@@ -73,6 +73,17 @@ app.get('/', authorizeToken, async (req, res) => {
 });
 
 
+app.get('/candles', authorizeToken, async (req, res) => {
+    const account = await api.metatraderAccountApi.getAccount(accountId);
+    const connection = account.getStreamingConnection();
+    await connection.connect();
+    const terminalState = connection.terminalState;
+    await connection.waitSynchronized();
+    const jumlahCandle = 72 //( 6 jam / 5 menit)
+    let result = await account.getHistoricalCandles('EURUSD', '5m', new Date(), jumlahCandle);
+    res.status(200).json({ result: result });
+});
+
 app.post('/closeposition', authorizeToken, async (req, res) => {
     const account = await api.metatraderAccountApi.getAccount(accountId);
     const connection = account.getStreamingConnection();
