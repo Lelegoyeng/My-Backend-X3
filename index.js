@@ -73,15 +73,47 @@ app.get('/', authorizeToken, async (req, res) => {
 });
 
 
-app.get('/candles', authorizeToken, async (req, res) => {
+app.get('/history', authorizeToken, async (req, res) => {
     const account = await api.metatraderAccountApi.getAccount(accountId);
     const connection = account.getStreamingConnection();
     await connection.connect();
     const terminalState = connection.terminalState;
     await connection.waitSynchronized();
-    const jumlahCandle = 72 //( 6 jam / 5 menit)
-    let result = await account.getHistoricalCandles('EURUSD', '5m', new Date(), jumlahCandle);
-    res.status(200).json({ result: result });
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Satu minggu yang lalu
+    const historyWeek = connection.historyStorage.getDealsByTimeRange(oneWeekAgo, new Date());
+    const weeklyProfit = {
+        Monday: 0,
+        Tuesday: 0,
+        Wednesday: 0,
+        Thursday: 0,
+        Friday: 0,
+        Saturday: 0,
+        Sunday: 0,
+    };
+
+    historyWeek.forEach((result) => {
+        const dealTime = new Date(result.brokerTime);
+        const options = { weekday: 'long' };
+        const dayName = dealTime.toLocaleDateString('en-US', options);
+        weeklyProfit[dayName] += result.profit;
+    });
+
+    const DataWeekly = {
+        Monday: parseFloat(weeklyProfit.Monday.toFixed(2)),
+        Tuesday: parseFloat(weeklyProfit.Tuesday.toFixed(2)),
+        Wednesday: parseFloat(weeklyProfit.Wednesday.toFixed(2)),
+        Thursday: parseFloat(weeklyProfit.Thursday.toFixed(2)),
+        Friday: parseFloat(weeklyProfit.Friday.toFixed(2)),
+        Saturday: parseFloat(weeklyProfit.Saturday.toFixed(2)),
+        Sunday: parseFloat(weeklyProfit.Sunday.toFixed(2)),
+    }
+
+    const Results = {
+        weekly: DataWeekly,
+        totalWeekly: DataWeekly.Monday + DataWeekly.Tuesday +
+            DataWeekly.Wednesday + DataWeekly.Thursday + DataWeekly.Friday + DataWeekly.Saturday + DataWeekly.Sunday
+    }
+    res.status(200).json({ result: Results });
 });
 
 app.post('/closeposition', authorizeToken, async (req, res) => {
