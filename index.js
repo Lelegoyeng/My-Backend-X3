@@ -79,6 +79,7 @@ app.get('/history', authorizeToken, async (req, res) => {
     await connection.connect();
     const terminalState = connection.terminalState;
     await connection.waitSynchronized();
+    // Weekly Transaction
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Satu minggu yang lalu
     const historyWeek = connection.historyStorage.getDealsByTimeRange(oneWeekAgo, new Date());
     const weeklyProfit = {
@@ -108,11 +109,108 @@ app.get('/history', authorizeToken, async (req, res) => {
         Sunday: parseFloat(weeklyProfit.Sunday.toFixed(2)),
     }
 
+    // Month Transaction
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const historyMonth = connection.historyStorage.getDealsByTimeRange(firstDayOfMonth, today);
+
+    const MonthProfit = {
+        week1: 0,
+        week2: 0,
+        week3: 0,
+        week4: 0,
+    };
+
+    historyMonth.forEach((historyMonth) => {
+        const dealDate = historyMonth.time;
+        const dealWeek = Math.ceil(dealDate.getDate() / 7);
+        MonthProfit[`week${dealWeek}`] += historyMonth.profit;
+    });
+
+    const DataMonth = {
+        week1: parseFloat(MonthProfit.week1.toFixed(2)),
+        week2: parseFloat(MonthProfit.week2.toFixed(2)),
+        week3: parseFloat(MonthProfit.week3.toFixed(2)),
+        week4: parseFloat(MonthProfit.week4.toFixed(2)),
+    }
+
+    // Year Transaction
+    const firstDayOfYear = new Date(today.getFullYear(), 0, 1); // Bulan dimulai dari 0 (Januari)
+    const historyYear = connection.historyStorage.getDealsByTimeRange(firstDayOfYear, today);
+
+    const monthNames = [
+        'january',
+        'february',
+        'march',
+        'april',
+        'may',
+        'june',
+        'july',
+        'august',
+        'september',
+        'october',
+        'november',
+        'december',
+    ];
+    const YearProfit = {
+        january: 0,
+        february: 0,
+        march: 0,
+        april: 0,
+        may: 0,
+        june: 0,
+        july: 0,
+        august: 0,
+        september: 0,
+        october: 0,
+        november: 0,
+        december: 0,
+    };
+
+    historyYear.forEach((history) => {
+        const dealDate = new Date(history.time);
+        const monthIndex = dealDate.getMonth();
+        const monthName = monthNames[monthIndex];
+        YearProfit[monthName] += history.profit;
+    });
+
+    const DataYears = {
+        january: parseFloat(YearProfit.january.toFixed(2)),
+        february: parseFloat(YearProfit.february.toFixed(2)),
+        march: parseFloat(YearProfit.march.toFixed(2)),
+        april: parseFloat(YearProfit.april.toFixed(2)),
+        may: parseFloat(YearProfit.may.toFixed(2)),
+        june: parseFloat(YearProfit.june.toFixed(2)),
+        july: parseFloat(YearProfit.july.toFixed(2)),
+        august: parseFloat(YearProfit.august.toFixed(2)),
+        september: parseFloat(YearProfit.september.toFixed(2)),
+        october: parseFloat(YearProfit.october.toFixed(2)),
+        november: parseFloat(YearProfit.november.toFixed(2)),
+        december: parseFloat(YearProfit.december.toFixed(2)),
+    };
+
     const Results = {
         weekly: DataWeekly,
         totalWeekly: DataWeekly.Monday + DataWeekly.Tuesday +
-            DataWeekly.Wednesday + DataWeekly.Thursday + DataWeekly.Friday + DataWeekly.Saturday + DataWeekly.Sunday
+            DataWeekly.Wednesday + DataWeekly.Thursday + DataWeekly.Friday + DataWeekly.Saturday + DataWeekly.Sunday,
+        oneMonth: DataMonth,
+        totalOneMonth: DataMonth.week1 + DataMonth.week2 + DataMonth.week3 + DataMonth.week4,
+        Year: DataYears,
+        totalYear:
+            DataYears.january +
+            DataYears.february +
+            DataYears.march +
+            DataYears.april +
+            DataYears.may +
+            DataYears.june +
+            DataYears.july +
+            DataYears.august +
+            DataYears.september +
+            DataYears.october +
+            DataYears.november +
+            DataYears.december
     }
+
     res.status(200).json({ result: Results });
 });
 
